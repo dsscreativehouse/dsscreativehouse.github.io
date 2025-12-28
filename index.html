@@ -8,7 +8,7 @@
     body {
       background: black;
       color: #FFA500;
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
       height: 100vh;
       flex-direction: column;
@@ -16,65 +16,117 @@
       align-items: center;
       margin: 0;
     }
+    h1 {
+      margin-bottom: 1.5rem;
+      letter-spacing: 1px;
+    }
+    .form-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
     input, button {
       font-size: 1rem;
-      padding: 0.5rem;
-      margin: 0.25rem;
+      padding: 0.75rem;
       border-radius: 5px;
-      border: none;
+      border: 1px solid #FFA500;
+      outline: none;
     }
     input {
-      width: 250px;
+      width: 280px;
+      background: #111;
+      color: white;
+    }
+    input::placeholder {
+      color: #777;
     }
     button {
       background: #FFA500;
       cursor: pointer;
       color: black;
+      font-weight: bold;
+      width: 100%;
+      transition: transform 0.1s, background 0.2s;
     }
     button:hover {
       background: #ffb733;
     }
+    button:active {
+      transform: scale(0.98);
+    }
+    button:disabled {
+      background: #555;
+      cursor: not-allowed;
+      border-color: #555;
+    }
     #message {
-      margin-top: 1rem;
+      margin-top: 1.5rem;
+      font-weight: bold;
+      min-height: 1.2em;
     }
   </style>
 </head>
 <body>
+
   <h1>Join Our Waitlist</h1>
-  <input type="email" id="email" placeholder="Enter your email" />
-  <button onclick="submitEmail()">Join</button>
+  
+  <div class="form-container">
+    <input type="email" id="email" placeholder="Enter your email address" required />
+    <button id="submit-btn" onclick="submitEmail()">Join Now</button>
+  </div>
+
   <div id="message"></div>
 
   <script>
     async function submitEmail() {
-      const email = document.getElementById('email').value.trim();
+      const emailInput = document.getElementById('email');
+      const btn = document.getElementById('submit-btn');
       const msg = document.getElementById('message');
+      const email = emailInput.value.trim();
 
-      if (!email) {
+      // Basic local validation
+      if (!email || !email.includes('@')) {
         msg.style.color = 'red';
-        msg.textContent = 'Please enter a valid email.';
+        msg.textContent = 'Please enter a valid email address.';
         return;
       }
 
-      try {
-        const response = await fetch('https://script.google.com/macros/s/AKfycbyPdMDy2CxmTeufpa8Yr6SX7-VxA5n3_SoZFwa5HJuJQablh10GmrQWsWIm55Pobqhy/exec', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email })
-        });
-        const result = await response.json();
+      // UI State: Loading
+      msg.style.color = '#FFA500';
+      msg.textContent = 'Adding you to the list...';
+      btn.disabled = true;
 
-        if (result.status === 'success') {
-          msg.style.color = 'lime';
-          msg.textContent = "Thank you! You're on the waitlist.";
-          document.getElementById('email').value = '';
-        } else {
-          msg.style.color = 'red';
-          msg.textContent = 'Failed to submit. Try again.';
-        }
+      const scriptURL = 'https://script.google.com/macros/s/AKfycbyPdMDy2CxmTeufpa8Yr6SX7-VxA5n3_SoZFwa5HJuJQablh10GmrQWsWIm55Pobqhy/exec';
+
+      try {
+        /**
+         * We use 'no-cors' mode because Google Apps Script returns a 302 redirect.
+         * Browsers usually block this redirect in standard CORS mode.
+         * By using 'no-cors', the request is sent, but we cannot read the 
+         * JSON response body—we just assume success if the network request finishes.
+         */
+        await fetch(scriptURL, {
+          method: 'POST',
+          mode: 'no-cors', 
+          cache: 'no-cache',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({ 'email': email })
+        });
+
+        // Success State
+        msg.style.color = 'lime';
+        msg.textContent = "Success! You've been added.";
+        emailInput.value = '';
+
       } catch (e) {
+        console.error('Error!', e.message);
         msg.style.color = 'red';
-        msg.textContent = 'Network error. Try again later.';
+        msg.textContent = 'Something went wrong. Please try again.';
+      } finally {
+        btn.disabled = false;
       }
     }
   </script>
