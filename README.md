@@ -1,1 +1,1 @@
-[Smritilok.com](www.smritilok.com)
+[www.smritilok.com](https://www.smritilok.com)
